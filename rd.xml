@@ -1,7 +1,0 @@
-<Directives xmlns="http://schemas.microsoft.com/netfx/2013/01/metadata">
-    <Application>
-        <Assembly Name="System.Collections" Dynamic="Required All" >
-            <Type Name="System.Collections.Generic.List`1[System.String]" Dynamic="Required All" />
-        </Assembly>
-    </Application>
-</Directives>
