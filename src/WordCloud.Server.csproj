@@ -14,6 +14,8 @@
     <EnableUnsafeUTF7Encoding>true</EnableUnsafeUTF7Encoding>
     <InvariantGlobalization>true</InvariantGlobalization>
     <UseSystemResourceKeys>true</UseSystemResourceKeys>
+
+    <ServerGarbageCollection>false</ServerGarbageCollection>
   </PropertyGroup>
 
   <ItemGroup>
