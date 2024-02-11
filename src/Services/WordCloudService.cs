@@ -46,7 +46,7 @@ internal class WordCloudService(CutWordService cutWordService, ILogger<WordCloud
                                  .ToDictionary(x => x.Key, x => x.Count());
 
         using var image = cloud.GenerateImage(dict);
-        var data = image.Encode(SKEncodedImageFormat.Webp, 80);
+        var data = image.Encode(SKEncodedImageFormat.Webp, options.Quality ?? 80);
         return Results.File(data.AsStream(), "image/webp");
     }
 }

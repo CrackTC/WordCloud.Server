@@ -18,5 +18,6 @@ internal record WordCloudOptions(
    [property: JsonPropertyName("stroke_width")] int? StrokeWidth,
    [property: JsonPropertyName("colors")] string[]? Colors,
    [property: JsonPropertyName("stroke_colors")] string[]? StrokeColors,
+   [property: JsonPropertyName("quality")] int? Quality,
    [property: JsonPropertyName("text"), Required] string Text
 );
