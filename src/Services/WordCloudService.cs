@@ -35,6 +35,8 @@ internal class WordCloudService(CutWordService cutWordService, ILogger<WordCloud
             builder.WithSimilarity(similarity);
         if (options.StrokeWidth is { } strokeWidth)
             builder.WithStrokeWidth(strokeWidth);
+        if (options.Verticality is { } verticality)
+            builder.WithVerticality(verticality);
         if (options.Colors is { } colors)
             builder.WithColorFunc(_ => SKColor.Parse(colors[Random.Shared.Next(colors.Length)]));
         if (options.StrokeColors is { } strokeColors)
