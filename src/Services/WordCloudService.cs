@@ -10,7 +10,7 @@ internal class WordCloudService(
     CutWordService cutWordService,
     ILogger<WordCloudService> logger)
 {
-    private readonly SemaphoreSlim _semaphore = new(1, 1);
+    private static readonly SemaphoreSlim _semaphore = new(1, 1);
 
     public IResult GenerateWordCloud(WordCloudOptions options)
     {
