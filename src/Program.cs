@@ -8,10 +8,10 @@ var builder = WebApplication.CreateSlimBuilder(args);
 builder.Configuration.AddEnvironmentVariables();
 builder.Services.AddSingleton<CutWordService>()
     .AddSingleton<WordCloudService>()
+    .Configure<StartupOptions>(builder.Configuration)
+    .AddMemoryCache()
+    .ConfigureHttpJsonOptions(options => options.SerializerOptions.TypeInfoResolverChain.Insert(0, AppJsonSerializerContext.Default))
     .AddHttpClient<WordCloudService>();
-
-builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.TypeInfoResolverChain.Insert(0, AppJsonSerializerContext.Default))
-    .Configure<StartupOptions>(builder.Configuration);
 
 builder.Logging.AddConsole();
 

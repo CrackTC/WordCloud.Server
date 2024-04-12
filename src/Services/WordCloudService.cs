@@ -1,10 +1,17 @@
+using Microsoft.Extensions.Caching.Memory;
 using SkiaSharp;
 using WordCloud.Server.Models;
 
 namespace WordCloud.Server.Services;
 
-internal class WordCloudService(HttpClient client, CutWordService cutWordService, ILogger<WordCloudService> logger)
+internal class WordCloudService(
+    HttpClient client,
+    IMemoryCache cache,
+    CutWordService cutWordService,
+    ILogger<WordCloudService> logger)
 {
+    private readonly SemaphoreSlim _semaphore = new(1, 1);
+
     public IResult GenerateWordCloud(WordCloudOptions options)
     {
         logger.LogInformation("Generating word cloud with options: {options}", options);
@@ -15,12 +22,28 @@ internal class WordCloudService(HttpClient client, CutWordService cutWordService
         if (options.MinFontSize is { } minFontSize)
             builder.WithMinFontSize(minFontSize);
 
-        SKTypeface? font = null;
         if (options.FontUrl is { } fontUrl)
         {
-            using var stream = client.GetStreamAsync(fontUrl).Result;
-            font = SKTypeface.FromStream(stream);
-            builder.WithFont(font);
+            _semaphore.Wait();
+            try
+            {
+                if (cache.TryGetValue(fontUrl, out SKTypeface? font) && font is not null)
+                    builder.WithFont(font);
+                else
+                {
+                    using var stream = client.GetStreamAsync(fontUrl).Result;
+                    font = SKTypeface.FromStream(stream);
+                    builder.WithFont(font);
+
+                    cache.Set(fontUrl, font, new MemoryCacheEntryOptions()
+                        .SetSlidingExpiration(TimeSpan.FromMinutes(2))
+                        .RegisterPostEvictionCallback((_, value, _, _) => (value as IDisposable)?.Dispose()));
+                }
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
         }
 
         if (options.FontSizeStep is { } step)
@@ -60,7 +83,6 @@ internal class WordCloudService(HttpClient client, CutWordService cutWordService
         using var image = cloud.GenerateImage(dict);
         var data = image.Encode(SKEncodedImageFormat.Webp, options.Quality ?? 100);
 
-        font?.Dispose();
         background?.Dispose();
 
         return Results.File(data.AsStream(), "image/webp");
