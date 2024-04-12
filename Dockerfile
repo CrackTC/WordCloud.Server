@@ -15,6 +15,5 @@ WORKDIR /app
 RUN apk add --no-cache fontconfig
 
 COPY --from=build /app/out .
-COPY ./fonts /app/fonts
 
 ENTRYPOINT [ "/app/WordCloud.Server" ]
