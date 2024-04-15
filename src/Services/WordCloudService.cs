@@ -70,6 +70,8 @@ internal class WordCloudService(
             builder.WithSimilarity(similarity);
         if (options.StrokeWidth is { } strokeWidth)
             builder.WithStrokeWidth(strokeWidth);
+        if (options.StrokeRatio is { } strokeRatio)
+            builder.WithStrokeRatio(strokeRatio);
         if (options.Verticality is { } verticality)
             builder.WithVerticality(verticality);
         if (options.Colors is { } colors)
