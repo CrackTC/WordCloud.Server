@@ -12,6 +12,25 @@ internal class WordCloudService(
 {
     private static readonly SemaphoreSlim _semaphore = new(1, 1);
 
+    private static (int, int) GetProperImageSize(int width, int height)
+    {
+        if (width > 2048 || height > 2048)
+        {
+            if (width > height)
+            {
+                height = height * 2048 / width;
+                width = 2048;
+            }
+            else
+            {
+                width = width * 2048 / height;
+                height = 2048;
+            }
+        }
+
+        return (width, height);
+    }
+
     public IResult GenerateWordCloud(WordCloudOptions options)
     {
         logger.LogInformation("Generating word cloud with options: {options}", options);
@@ -24,9 +43,10 @@ internal class WordCloudService(
             using var stream = client.GetStreamAsync(imageUrl).Result;
             background = SKImage.FromEncodedData(stream);
             builder.WithBackgroundImage(background);
-            builder.WithSize(background.Width, background.Height);
-            builder.WithMaxFontSize(Math.Min(background.Width, background.Height));
-            builder.WithBlur(Math.Min(background.Width, background.Height) / 144);
+            var (width, height) = GetProperImageSize(background.Width, background.Height);
+            builder.WithSize(width, height);
+            builder.WithMaxFontSize(Math.Min(width, height));
+            builder.WithBlur(Math.Min(width, height) / 144);
         }
 
         if (options.FontUrl is { } fontUrl)
