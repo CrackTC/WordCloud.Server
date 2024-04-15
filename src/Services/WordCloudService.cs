@@ -17,10 +17,17 @@ internal class WordCloudService(
         logger.LogInformation("Generating word cloud with options: {options}", options);
 
         var builder = new WordCloudBuilder();
-        if (options.MaxFontSize is { } maxFontsize)
-            builder.WithMaxFontSize(maxFontsize);
-        if (options.MinFontSize is { } minFontSize)
-            builder.WithMinFontSize(minFontSize);
+
+        SKImage? background = null;
+        if (options.BackgroundImageUrl is { } imageUrl)
+        {
+            using var stream = client.GetStreamAsync(imageUrl).Result;
+            background = SKImage.FromEncodedData(stream);
+            builder.WithBackgroundImage(background);
+            builder.WithSize(background.Width, background.Height);
+            builder.WithMaxFontSize(Math.Min(background.Width, background.Height));
+            builder.WithBlur(Math.Min(background.Width, background.Height) / 144);
+        }
 
         if (options.FontUrl is { } fontUrl)
         {
@@ -46,21 +53,16 @@ internal class WordCloudService(
             }
         }
 
+        if (options.MaxFontSize is { } maxFontsize)
+            builder.WithMaxFontSize(maxFontsize);
+        if (options.MinFontSize is { } minFontSize)
+            builder.WithMinFontSize(minFontSize);
         if (options.FontSizeStep is { } step)
             builder.WithFontSizeStep(step);
         if (options.Padding is { } padding)
             builder.WithPadding(padding);
         if (options.BackgroundColor is { } backgroundColor)
             builder.WithBackground(SKColor.Parse(backgroundColor));
-
-        SKImage? background = null;
-        if (options.BackgroundImageUrl is { } imageUrl)
-        {
-            using var stream = client.GetStreamAsync(imageUrl).Result;
-            background = SKImage.FromEncodedData(stream);
-            builder.WithBackgroundImage(background);
-            builder.WithSize(background.Width, background.Height);
-        }
 
         if (options.BackgroundImageBlur is { } blur)
             builder.WithBlur(blur);
