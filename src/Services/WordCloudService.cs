@@ -12,6 +12,15 @@ internal class WordCloudService(
 {
     private static readonly SemaphoreSlim _semaphore = new(1, 1);
 
+    private static readonly MemoryCacheEntryOptions _cacheOptions;
+
+    static WordCloudService()
+    {
+        _cacheOptions = new MemoryCacheEntryOptions()
+            .SetSlidingExpiration(TimeSpan.FromMinutes(2))
+            .RegisterPostEvictionCallback((_, value, _, _) => (value as IDisposable)?.Dispose());
+    }
+
     private static (int, int) GetProperImageSize(int width, int height)
     {
         if (width > 2048 || height > 2048)
@@ -31,7 +40,7 @@ internal class WordCloudService(
         return (width, height);
     }
 
-    public IResult GenerateWordCloud(WordCloudOptions options)
+    public IResult GenerateWordCloud(string host, WordCloudOptions options)
     {
         logger.LogInformation("Generating word cloud with options: {options}", options);
 
@@ -62,9 +71,7 @@ internal class WordCloudService(
                     font = SKTypeface.FromStream(stream);
                     builder.WithFont(font);
 
-                    cache.Set(fontUrl, font, new MemoryCacheEntryOptions()
-                        .SetSlidingExpiration(TimeSpan.FromMinutes(2))
-                        .RegisterPostEvictionCallback((_, value, _, _) => (value as IDisposable)?.Dispose()));
+                    cache.Set(fontUrl, font, _cacheOptions);
                 }
             }
             finally
@@ -104,11 +111,26 @@ internal class WordCloudService(
             .GroupBy(x => x)
             .ToDictionary(x => x.Key, x => x.Count());
 
-        using var image = cloud.GenerateImage(dict);
-        var data = image.Encode(SKEncodedImageFormat.Webp, options.Quality ?? 100);
+        var image = cloud.GenerateImage(dict);
+        var id = Guid.NewGuid().ToString();
+        cache.Set(id, image, _cacheOptions);
+        cache.Set($"{id}-quality", options.Quality ?? 100, _cacheOptions);
+        var url = host + "/result/" + id;
 
         background?.Dispose();
 
-        return Results.File(data.AsStream(), "image/webp");
+        return Results.Json(new WordCloudResult(url));
+    }
+
+    public IResult GetResult(string id)
+    {
+        if (cache.TryGetValue<SKImage>(id, out var image) && image is not null)
+        {
+            var quality = cache.Get<int>($"{id}-quality");
+            var data = image.Encode(SKEncodedImageFormat.Webp, quality);
+            return Results.File(data.AsStream(), "image/webp");
+        }
+
+        return Results.NotFound();
     }
 }

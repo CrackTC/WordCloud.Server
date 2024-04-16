@@ -25,11 +25,19 @@ app.MapPost(
 app.MapPost(
     "/wordcloud",
     (WordCloudService service,
+     HttpRequest request,
      [FromBody] WordCloudOptions options)
-        => service.GenerateWordCloud(options)
+        => service.GenerateWordCloud($"{request.Scheme}://{request.Host}", options)
 ).DisableAntiforgery();
+
+app.MapGet(
+    "/result/{id}",
+    (WordCloudService service, string id) => service.GetResult(id)
+);
 
 app.Run($"http://*:{app.Configuration.GetValue<int>("PORT")}/");
 
-[JsonSerializable(typeof(WordCloudOptions)), JsonSerializable(typeof(IEnumerable<string>))]
+[JsonSerializable(typeof(WordCloudOptions))]
+[JsonSerializable(typeof(WordCloudResult))]
+[JsonSerializable(typeof(IEnumerable<string>))]
 internal partial class AppJsonSerializerContext : JsonSerializerContext;
