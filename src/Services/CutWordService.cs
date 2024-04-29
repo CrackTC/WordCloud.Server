@@ -6,12 +6,29 @@ internal class CutWordService
 {
     private readonly PosSegmenter _segmenter = new();
 
-    readonly string[] blackList = ["ad", "c", "d", "x", "r", "u", "z", "y", "p", "f"];
+    private readonly string[] _blackList = [
+        "ad",
+        "c",
+        "d",
+        "f",
+        "p",
+        "r",
+        "u",
+        "ud",
+        "ug",
+        "uj",
+        "ul",
+        "uv",
+        "uz",
+        "x",
+        "y",
+        "z",
+    ];
 
     public IEnumerable<string> CutWord(string text)
         => _segmenter.Cut(text)
-                     .Where(token => !blackList.Contains(token.Flag)
-                            && !(token.Flag[0] is 'v' && token.Word.Length is < 2)
-                            && !(token.Flag[0] is 'q' && token.Word.Length is < 3))
-                     .Select(token => token.Word);
+            .Where(token => !_blackList.Contains(token.Flag)
+                            && !(token.Flag[0] is 'v' && token.Word.Length < 2)
+                            && !(token.Flag[0] is 'q' && token.Word.Length < 3))
+            .Select(token => token.Word);
 }
