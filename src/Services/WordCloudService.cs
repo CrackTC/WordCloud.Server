@@ -40,7 +40,7 @@ internal class WordCloudService(
         return (width, height);
     }
 
-    public IResult GenerateWordCloud(string host, WordCloudOptions options)
+    public async Task<IResult> GenerateWordCloudAsync(string host, WordCloudOptions options)
     {
         logger.LogInformation("Generating word cloud with options: {options}", options);
 
@@ -107,7 +107,7 @@ internal class WordCloudService(
             builder.WithStrokeColorFunc(_ => SKColor.Parse(strokeColors[Random.Shared.Next(strokeColors.Length)]));
 
         using var cloud = builder.Build();
-        var dict = cutWordService.CutWord(options.Text)
+        var dict = (await cutWordService.CutWordAsync(options.Text))
             .GroupBy(x => x)
             .ToDictionary(x => x.Key, x => x.Count());
 

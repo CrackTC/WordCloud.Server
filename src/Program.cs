@@ -8,7 +8,6 @@ var builder = WebApplication.CreateSlimBuilder(args);
 builder.Configuration.AddEnvironmentVariables();
 builder.Services.AddSingleton<CutWordService>()
     .AddSingleton<WordCloudService>()
-    .Configure<StartupOptions>(builder.Configuration)
     .AddMemoryCache()
     .ConfigureHttpJsonOptions(options => options.SerializerOptions.TypeInfoResolverChain.Insert(0, AppJsonSerializerContext.Default))
     .AddHttpClient<WordCloudService>();
@@ -19,15 +18,16 @@ var app = builder.Build();
 
 app.MapPost(
     "/cut",
-    (CutWordService service, [FromForm] string text) => service.CutWord(text)
+    async (CutWordService service, [FromForm] string text) => await service.CutWordAsync(text)
 ).DisableAntiforgery();
 
 app.MapPost(
     "/wordcloud",
-    (WordCloudService service,
-     HttpRequest request,
-     [FromBody] WordCloudOptions options)
-        => service.GenerateWordCloud($"{request.Scheme}://{request.Host}", options)
+    async (
+      WordCloudService service,
+      HttpRequest request,
+      [FromBody] WordCloudOptions options
+    ) => await service.GenerateWordCloudAsync($"{request.Scheme}://{request.Host}", options)
 ).DisableAntiforgery();
 
 app.MapGet(
