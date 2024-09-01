@@ -7,7 +7,7 @@ COPY ./src/*.csproj ./
 RUN dotnet restore
 
 COPY ./src/ ./
-RUN dotnet publish -c Release -o out -r linux-musl-x64 && rm -rf out/WordCloud.Server.dbg
+RUN dotnet publish -c Release -o out && rm -rf out/WordCloud.Server.dbg
 
 FROM alpine AS runtime
 WORKDIR /app
