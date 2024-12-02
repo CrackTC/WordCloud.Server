@@ -23,7 +23,7 @@ internal class WordCloudService(
 
     private static (int, int) GetProperImageSize(int width, int height)
     {
-        if (width > 2048 || height > 2048)
+        if (Math.Max(width, height) > 2048)
         {
             if (width > height)
             {
@@ -49,25 +49,27 @@ internal class WordCloudService(
         SKImage? background = null;
         if (options.BackgroundImageUrl is { } imageUrl)
         {
-            using var stream = client.GetStreamAsync(imageUrl).Result;
+            using var stream = await client.GetStreamAsync(imageUrl);
             background = SKImage.FromEncodedData(stream);
-            builder.WithBackgroundImage(background);
             var (width, height) = GetProperImageSize(background.Width, background.Height);
-            builder.WithSize(width, height);
-            builder.WithMaxFontSize(Math.Min(width, height));
-            builder.WithBlur(Math.Min(width, height) / 144);
+
+            builder
+                .WithBackgroundImage(background)
+                .WithSize(width, height)
+                .WithMaxFontSize(Math.Min(width, height))
+                .WithBlur(Math.Min(width, height) / 144);
         }
 
         if (options.FontUrl is { } fontUrl)
         {
-            _semaphore.Wait();
+            await _semaphore.WaitAsync();
             try
             {
                 if (cache.TryGetValue(fontUrl, out SKTypeface? font) && font is not null)
                     builder.WithFont(font);
                 else
                 {
-                    using var stream = client.GetStreamAsync(fontUrl).Result;
+                    using var stream = await client.GetStreamAsync(fontUrl);
                     font = SKTypeface.FromStream(stream);
                     builder.WithFont(font);
 
