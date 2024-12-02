@@ -5,21 +5,18 @@ using WordCloud.Server.Models;
 namespace WordCloud.Server.Services;
 
 internal class WordCloudService(
+    IConfiguration configuration,
     HttpClient client,
     IMemoryCache cache,
     CutWordService cutWordService,
-    ILogger<WordCloudService> logger)
+    ILogger<WordCloudService> logger
+)
 {
-    private static readonly SemaphoreSlim _semaphore = new(1, 1);
-
-    private static readonly MemoryCacheEntryOptions _cacheOptions;
-
-    static WordCloudService()
-    {
-        _cacheOptions = new MemoryCacheEntryOptions()
+    private static readonly MemoryCacheEntryOptions _cacheOptions = new MemoryCacheEntryOptions()
             .SetSlidingExpiration(TimeSpan.FromMinutes(2))
             .RegisterPostEvictionCallback((_, value, _, _) => (value as IDisposable)?.Dispose());
-    }
+    private readonly SKTypeface _typeface = SKTypeface.FromFile(configuration.GetValue<string>("FONT_PATH"));
+    private readonly SKTypeface _emojiTypeface = SKTypeface.FromFile(configuration.GetValue<string>("EMOJI_FONT_PATH"));
 
     private static (int, int) GetProperImageSize(int width, int height)
     {
@@ -44,7 +41,9 @@ internal class WordCloudService(
     {
         logger.LogInformation("Generating word cloud with options: {options}", options);
 
-        var builder = new WordCloudBuilder();
+        var builder = new WordCloudBuilder()
+            .WithFont(_typeface)
+            .WithEmojiFont(_emojiTypeface);
 
         SKImage? background = null;
         if (options.BackgroundImageUrl is { } imageUrl)
@@ -58,28 +57,6 @@ internal class WordCloudService(
                 .WithSize(width, height)
                 .WithMaxFontSize(Math.Min(width, height))
                 .WithBlur(Math.Min(width, height) / 144);
-        }
-
-        if (options.FontUrl is { } fontUrl)
-        {
-            await _semaphore.WaitAsync();
-            try
-            {
-                if (cache.TryGetValue(fontUrl, out SKTypeface? font) && font is not null)
-                    builder.WithFont(font);
-                else
-                {
-                    using var stream = await client.GetStreamAsync(fontUrl);
-                    font = SKTypeface.FromStream(stream);
-                    builder.WithFont(font);
-
-                    cache.Set(fontUrl, font, _cacheOptions);
-                }
-            }
-            finally
-            {
-                _semaphore.Release();
-            }
         }
 
         if (options.MaxFontSize is { } maxFontsize)

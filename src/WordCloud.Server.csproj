@@ -19,7 +19,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Sorac.WordCloud" Version="1.1.3" />
+    <PackageReference Include="Sorac.WordCloud" Version="1.2.1" />
     <RdXmlFile Include="rd.xml" />
   </ItemGroup>
 
