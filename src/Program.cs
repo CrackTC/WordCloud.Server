@@ -18,7 +18,7 @@ var app = builder.Build();
 
 app.MapPost(
     "/cut",
-    async (CutWordService service, [FromForm] string text) => await service.CutWordAsync(text)
+    (CutWordService service, [FromForm] string text) => service.CutWord(text)
 ).DisableAntiforgery();
 
 app.MapPost(

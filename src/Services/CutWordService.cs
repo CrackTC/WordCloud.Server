@@ -1,56 +1,40 @@
-using System.Text.Json.Nodes;
+using JiebaNet.Segmenter.PosSeg;
 
 namespace WordCloud.Server.Services;
 
-internal class CutWordService(
-    IConfiguration configuration,
-    HttpClient client)
+internal class CutWordService
 {
-    private readonly string _posUrl = configuration["POS_URL"]!;
-    private readonly HttpClient _client = client;
+    private readonly PosSegmenter _segmenter = new();
 
-    private readonly string[] _blackList = [
-        "AD",
-        "AS",
-        "BA",
-        "CC",
-        "CD",
-        "CS",
-        "DEC",
-        "DEG",
-        "DER",
-        "DEV",
-        "DT",
-        "ETC",
-        "IJ",
-        "LB",
-        "LC",
-        "M",
-        "MSP",
-        "NOI",
-        "P",
-        "PN",
-        "PU",
-        "SB",
-        "SP",
-        "VC",
-        "VE",
+    private readonly HashSet<string> _blackList = [
+        "ad",
+        "c",
+        "d",
+        "e",
+        "f",
+        "k",
+        "p",
+        "r",
+        "u",
+        "ud",
+        "ug",
+        "uj",
+        "ul",
+        "uv",
+        "uz",
+        "x",
+        "y",
+        "yg",
+        "z",
+        "zg"
     ];
 
-    private async Task<JsonArray> Cut(string text)
-    {
-        using var formContent = new FormUrlEncodedContent([new("text", text)]);
-        var response = await _client.PostAsync(_posUrl, formContent);
-        return JsonNode.Parse(await response.Content.ReadAsStreamAsync())?.AsArray()
-            ?? throw new InvalidOperationException("Response array is null");
-    }
-
-    public async Task<IEnumerable<string>> CutWordAsync(string text)
-        => (await Cut(text))
-             .OfType<JsonArray>()
-             .Select(pair => (Word: pair[0]!.GetValue<string>(), Flag: pair[1]!.GetValue<string>()))
-             .Where(pair => !_blackList.Contains(pair.Flag)
-                     && !(pair.Flag[0] is 'V' && pair.Word.Length < 2)
-                     && !(pair.Flag is "M" && pair.Word.Length < 3))
-             .Select(pair => pair.Word);
+    public IEnumerable<string> CutWord(string text)
+        => _segmenter.Cut(text)
+            .Where(token => !_blackList.Contains(token.Flag)
+                && !(token.Flag[0] is 'v' && token.Word.Length < 2)
+                && !(token.Flag[0] is 'a' && token.Word.Length < 2)
+                && !(token.Flag[0] is 'm' && token.Word.Length < 2)
+                && !(token.Flag[0] is 'q' && token.Word.Length < 3))
+            .Select(token => token.Word);
 }

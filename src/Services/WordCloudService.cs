@@ -93,7 +93,7 @@ internal class WordCloudService(
             builder.WithStrokeColorFunc(_ => SKColor.Parse(strokeColors[Random.Shared.Next(strokeColors.Length)]));
 
         using var cloud = builder.Build();
-        var dict = (await cutWordService.CutWordAsync(options.Text))
+        var dict = cutWordService.CutWord(options.Text)
             .GroupBy(x => x)
             .ToDictionary(x => x.Key, x => x.Count());
 

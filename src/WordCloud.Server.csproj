@@ -19,7 +19,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="jieba.NET" Version="0.42.2" />
     <PackageReference Include="Sorac.WordCloud" Version="1.3.0" />
+    <TrimmerRootAssembly Include="System.Configuration.ConfigurationManager" />
     <RdXmlFile Include="rd.xml" />
   </ItemGroup>
 
