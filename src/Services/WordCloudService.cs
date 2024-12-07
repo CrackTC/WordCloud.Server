@@ -18,19 +18,19 @@ internal class WordCloudService(
     private readonly SKTypeface _typeface = SKTypeface.FromFile(configuration.GetValue<string>("FONT_PATH"));
     private readonly SKTypeface _emojiTypeface = SKTypeface.FromFile(configuration.GetValue<string>("EMOJI_FONT_PATH"));
 
-    private static (int, int) GetProperImageSize(int width, int height)
+    private static (int, int) FitBoxSize(int limit, int width, int height)
     {
-        if (Math.Max(width, height) > 2048)
+        if (Math.Max(width, height) > limit)
         {
             if (width > height)
             {
-                height = height * 2048 / width;
-                width = 2048;
+                height = height * limit / width;
+                width = limit;
             }
             else
             {
-                width = width * 2048 / height;
-                height = 2048;
+                width = width * limit / height;
+                height = limit;
             }
         }
 
@@ -50,13 +50,18 @@ internal class WordCloudService(
         {
             using var stream = await client.GetStreamAsync(imageUrl);
             background = SKImage.FromEncodedData(stream);
-            var (width, height) = GetProperImageSize(background.Width, background.Height);
+            var (width, height) = FitBoxSize(options.BackgroundSizeLimit ?? 1280, background.Width, background.Height);
 
             builder
                 .WithBackgroundImage(background)
                 .WithSize(width, height)
                 .WithMaxFontSize(Math.Min(width, height))
                 .WithBlur(Math.Min(width, height) / 144);
+        }
+        else
+        {
+            var (w, h) = (options.Width ?? 1280, options.Height ?? 720);
+            builder.WithSize(w, h);
         }
 
         if (options.MaxFontSize is { } maxFontsize)
