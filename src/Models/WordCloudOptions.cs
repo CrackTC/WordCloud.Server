@@ -6,6 +6,7 @@ namespace WordCloud.Server.Models;
 internal record WordCloudOptions(
    [property: JsonPropertyName("width")] int? Width,
    [property: JsonPropertyName("height")] int? Height,
+   [property: JsonPropertyName("scale")] float? Scale,
    [property: JsonPropertyName("max_font_size")] int? MaxFontSize,
    [property: JsonPropertyName("min_font_size")] int? MinFontSize,
    [property: JsonPropertyName("font_size_step")] int? FontSizeStep,

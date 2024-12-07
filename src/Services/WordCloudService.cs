@@ -64,6 +64,8 @@ internal class WordCloudService(
             builder.WithSize(w, h);
         }
 
+        if (options.Scale is { } scale)
+            builder.WithScale(scale);
         if (options.MaxFontSize is { } maxFontsize)
             builder.WithMaxFontSize(maxFontsize);
         if (options.MinFontSize is { } minFontSize)
